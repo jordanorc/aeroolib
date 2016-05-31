@@ -1096,8 +1096,19 @@ class OOSerializer:
                     guess_type = 'float'
                     tag.attrib['{%s}value' % namespaces['office']] = tag[0].text
                 except (ValueError,TypeError):
-                    guess_type = 'string'
+                    pattern = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2})$")
+                    try:
+                        is_date = pattern.match(tag[0].text)
+                    except TypeError:
+                        is_date = None
+                    if is_date:
+                        guess_type = 'date'
+                        tag.attrib['{%s}date-value' % namespaces['office']] = tag[0].text
+                    else:
+                        guess_type = 'string'
             tag.attrib['{%s}value-type' % namespaces['office']] = guess_type
+            if namespaces.get('calcext'):
+                tag.attrib['{%s}value-type' % namespaces['calcext']] = guess_type
             del tag.attrib['guess_type']
 
     def check_images(self, tree, namespaces):
