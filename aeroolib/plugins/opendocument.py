@@ -40,6 +40,7 @@ from io import BytesIO
 import re
 import time
 import urllib.parse
+import uuid
 import warnings
 import zipfile
 
@@ -672,13 +673,11 @@ class Template(MarkupTemplate):
         draw_name = '{%s}name' % draw_namespace
         draw_image = '{%s}image' % draw_namespace
         py_attrs = '{%s}attrs' % self.namespaces['py']
-        svg_namespace = self.namespaces['svg']
-        svg_width = '{%s}width' % svg_namespace
-        svg_height = '{%s}height' % svg_namespace
+
         xpath_expr = "//draw:frame[starts-with(@draw:name, 'image:')]"
         for draw in tree.xpath(xpath_expr, namespaces=self.namespaces):
             d_name = draw.attrib[draw_name][6:].strip()
-            draw.attrib[draw_name] = "Aeroo picture "
+            draw.attrib[draw_name] = str(uuid.uuid4())
             attr_expr = "__aeroo_make_href(%s)" % d_name
             image_node = EtreeElement(draw_image,
                                       attrib={py_attrs: attr_expr},
@@ -1218,6 +1217,9 @@ class OOSerializer:
         return node_list2
 
     def __call__(self, stream):
+        output_encode = genshi.output.encode
+        # bug with styles.xml and headers on newer versions
+        # libreoffice
         files = {}
         for kind, data, pos in stream:
             if kind == genshi.core.PI and data[0] == 'aeroo':
@@ -1228,7 +1230,7 @@ class OOSerializer:
         now = time.localtime()[:6]
         outzip = self.outzip
         self.template.seek(0)
-        inzip = zipfile.ZipFile(BytesIO(self.template.read()))
+        inzip = zipfile.ZipFile(self.template.name)
         for f_info in inzip.infolist():
             if f_info.filename.startswith('ObjectReplacements'):
                 continue
@@ -1239,16 +1241,17 @@ class OOSerializer:
                 new_info = zipfile.ZipInfo(f_info.filename, now)
                 for attr in ('compress_type', 'flag_bits', 'create_system'):
                     setattr(new_info, attr, getattr(f_info, attr))
-                serialized_stream = output_encode(self.xml_serializer(stream), encoding='utf-8')
-                # Styles usage
+                serialized_stream = output_encode(self.xml_serializer(stream))
+                serialized_stream = bytes(serialized_stream, encoding="UTF-8")
+                # ############## Styles usage #################
                 if f_info.filename == STYLES:
                     self.styles_orig = TStyle(serialized_stream)
-                    self.check_guess_type(self.styles_orig.tree, self.styles_orig.namespaces)
-                    self.check_images(self.styles_orig.tree, self.styles_orig.namespaces)
-                    self.check_new_lines(self.styles_orig.tree, self.styles_orig.namespaces)
-                    self.check_tabs(self.styles_orig.tree, self.styles_orig.namespaces)
-                    self.check_spaces(self.styles_orig.tree, self.styles_orig.namespaces)
                     if hasattr(self, 'styles_new'):
+                        self.check_guess_type(self.styles_orig.tree, self.styles_orig.namespaces)
+                        self.check_images(self.styles_orig.tree, self.styles_orig.namespaces)
+                        self.check_new_lines(self.styles_orig.tree, self.styles_orig.namespaces)
+                        self.check_tabs(self.styles_orig.tree, self.styles_orig.namespaces)
+                        self.check_spaces(self.styles_orig.tree, self.styles_orig.namespaces)
                         pictures = []
                         for file_name in self.styles_zip.namelist():
                             if file_name.startswith('Pictures'):
@@ -1257,8 +1260,8 @@ class OOSerializer:
                                 self.manifest.add_file_entry(file_name)
                         for ffile, picture in pictures:
                             outzip.writestr(ffile, picture)
-
-                    outzip.writestr(new_info, str(self.styles_orig))
+                    outzip.writestr(new_info, bytes(self.styles_orig))
+                ###############################################
                 elif f_info.filename == 'content.xml':
                     content = TContent(serialized_stream)
                     self.check_guess_type(content.tree, content.namespaces)
@@ -1266,13 +1269,13 @@ class OOSerializer:
                     self.check_new_lines(content.tree, content.namespaces)
                     self.check_tabs(content.tree, content.namespaces)
                     self.check_spaces(content.tree, content.namespaces)
-                    outzip.writestr(new_info, str(content))
+                    outzip.writestr(new_info, bytes(content))
                 else:
                     outzip.writestr(new_info, serialized_stream)
             elif f_info.filename == MANIFEST:
-                outzip.writestr(f_info, str(self.manifest))
+                outzip.writestr(f_info, bytes(self.manifest))
             elif f_info.filename == META:
-                outzip.writestr(f_info, str(self.meta))
+                outzip.writestr(f_info, bytes(self.meta))
             elif f_info.filename == 'Thumbnails/thumbnail.png':
                 continue
             else:
