@@ -4,7 +4,7 @@
 # Reserved.
 #                    General contacts <info@alistek.com>
 #
-# DISCLAIMER: This module is licensed under GPLv3 or newer and 
+# DISCLAIMER: This module is licensed under GPLv3 or newer and
 # is considered incompatible with OpenERP SA "AGPL + Private Use License"!
 #
 # Copyright (c) 2007, 2008 OpenHex SPRL. (http://openhex.com) All Rights
@@ -32,15 +32,14 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ##############################################################################
+from io import BytesIO
 
-__metaclass__ = type
-
-from cStringIO import OutputType
-
+from aeroolib.reporting import MIMETemplateLoader
 import genshi.core
 from genshi.template import NewTextTemplate, MarkupTemplate
 
-from aeroolib.reporting import Report, MIMETemplateLoader
+
+__metaclass__ = type
 
 
 class AerooStream(genshi.core.Stream):
@@ -60,10 +59,11 @@ class AerooStream(genshi.core.Stream):
 
     def __str__(self):
         val = self.render()
-        if isinstance(val, OutputType):
+        if isinstance(val, BytesIO):
             return val.getvalue()
         else:
             return val
+
 
 MIMETemplateLoader.add_factory('text', NewTextTemplate)
 MIMETemplateLoader.add_factory('xml', MarkupTemplate)

@@ -1,18 +1,21 @@
 import os
 import re
+
 from setuptools import setup, find_packages
+
 
 def get_version():
     init = open(os.path.join(os.path.dirname(__file__), 'aeroolib',
                              '__init__.py')).read()
     return re.search(r"""__version__ = '([0-9.\sA-Za-z]*)'""", init).group(1)
 
+
 setup(
     name="aeroolib",
     url="http://www.alistek.com/",
     author="Alistek Ltd",
     author_email="info@alistek.com",
-    maintainer=u"Alistek Ltd",
+    maintainer="Alistek Ltd",
     maintainer_email="info@alistek.com",
     description="A templating library able to output ODF files",
     long_description="""
@@ -30,7 +33,7 @@ and report together, find reports by mimetypes/name/python objects.
     version=get_version(),
     packages=find_packages(),
     install_requires=[
-        "Genshi >= 0.5",
+        "Genshi >= 0.7",
         "lxml >= 2.0"
     ],
     classifiers=[
@@ -43,4 +46,4 @@ and report together, find reports by mimetypes/name/python objects.
         "Topic :: Text Processing",
     ],
     test_suite="nose.collector",
-    )
+)

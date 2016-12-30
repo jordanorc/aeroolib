@@ -12,6 +12,9 @@ aeroolib also provides a report repository allowing you to link python objects
 and report together, find reports by mimetypes/name/python objects.
 """
 from aeroolib.reporting import MIMETemplateLoader, ReportRepository, Report
-import plugins
+
+from . import plugins
+
 
 __version__ = '1.2.0'
+__all__ = ['MIMETemplateLoader, ReportRepository, Report']

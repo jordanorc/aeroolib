@@ -4,7 +4,7 @@
 # Reserved.
 #                    General contacts <info@alistek.com>
 #
-# DISCLAIMER: This module is licensed under GPLv3 or newer and 
+# DISCLAIMER: This module is licensed under GPLv3 or newer and
 # is considered incompatible with OpenERP SA "AGPL + Private Use License"!
 #
 # Copyright (c) 2007, 2008 OpenHex SPRL. (http://openhex.com) All Rights
@@ -32,13 +32,14 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ##############################################################################
+import os
+import sys
+
+from genshi.template import TemplateLoader
+
 
 __metaclass__ = type
 
-import os, sys
-
-import pkg_resources
-from genshi.template import TemplateLoader
 
 def _absolute(path):
     "Compute the absolute path of path relative to the caller file"
@@ -47,6 +48,7 @@ def _absolute(path):
     caller_fname = sys._getframe(2).f_globals['__file__']
     caller_dir = os.path.dirname(caller_fname)
     return os.path.abspath(os.path.join(caller_dir, path))
+
 
 def _guess_type(mime):
     """
@@ -100,6 +102,7 @@ class MIMETemplateLoader(TemplateLoader):
         if id_function is not None:
             cls.mime_func.append(id_function)
 
+
 default_loader = MIMETemplateLoader(auto_reload=True)
 
 
@@ -114,6 +117,7 @@ class DefaultFactory:
     def __call__(self, **kwargs):
         data = kwargs.copy()
         return data
+
 
 default_factory = DefaultFactory()
 
@@ -137,7 +141,6 @@ class Report:
 
     def __repr__(self):
         return '<aeroo report on %s>' % self.fpath
-
 
 
 class ReportDict:
